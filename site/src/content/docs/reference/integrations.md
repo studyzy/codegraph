@@ -8,6 +8,7 @@ The interactive installer auto-detects and configures each supported agent — w
 ## Supported agents
 
 - **Claude Code**
+- **CodeBuddy**
 - **Cursor**
 - **Codex CLI**
 - **opencode**

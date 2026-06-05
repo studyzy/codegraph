@@ -2,7 +2,7 @@
 
 # CodeGraph
 
-### Supercharge Claude Code, Cursor, Codex, OpenCode, Hermes Agent, Gemini, Antigravity, and Kiro with Semantic Code Intelligence
+### Supercharge Claude Code, CodeBuddy, Cursor, Codex, OpenCode, Hermes Agent, Gemini, Antigravity, and Claude with Semantic Code Intelligence
 
 **~16% cheaper · ~58% fewer tool calls · 100% local**
 
@@ -17,6 +17,7 @@
 [![Linux](https://img.shields.io/badge/Linux-supported-blue.svg)](#supported-platforms)
 
 [![Claude Code](https://img.shields.io/badge/Claude_Code-supported-blueviolet.svg)](#supported-agents)
+[![CodeBuddy](https://img.shields.io/badge/CodeBuddy-supported-blueviolet.svg)](#supported-agents)
 [![Cursor](https://img.shields.io/badge/Cursor-supported-blueviolet.svg)](#supported-agents)
 [![Codex](https://img.shields.io/badge/Codex-supported-blueviolet.svg)](#supported-agents)
 [![opencode](https://img.shields.io/badge/opencode-supported-blueviolet.svg)](#supported-agents)
@@ -601,6 +602,7 @@ the MCP server (which delivers its own usage guidance, so no instructions file
 is written):
 
 - **Claude Code**
+- **CodeBuddy**
 - **Cursor**
 - **Codex CLI**
 - **opencode**

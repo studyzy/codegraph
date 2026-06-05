@@ -27,6 +27,8 @@ If you'd rather wire it up yourself, install globally:
 npm install -g @colbymchenry/codegraph
 ```
 
+### Claude Code
+
 Add the MCP server to `~/.claude.json`:
 
 ```json
@@ -55,6 +57,40 @@ Optionally auto-allow the read-only tools in `~/.claude/settings.json`:
       "mcp__codegraph__codegraph_node",
       "mcp__codegraph__codegraph_status",
       "mcp__codegraph__codegraph_files"
+    ]
+  }
+}
+```
+
+### CodeBuddy
+
+Add the MCP server to `~/.codebuddy/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "codegraph": {
+      "type": "stdio",
+      "command": "codegraph",
+      "args": ["serve", "--mcp"]
+    }
+  }
+}
+```
+
+Optionally auto-allow the read-only tools in `~/.codebuddy/settings.json`:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__codegraph__codegraph_search",
+      "mcp__codegraph__codegraph_context",
+      "mcp__codegraph__codegraph_callers",
+      "mcp__codegraph__codegraph_callees",
+      "mcp__codegraph__codegraph_impact",
+      "mcp__codegraph__codegraph_node",
+      "mcp__codegraph__codegraph_status"
     ]
   }
 }

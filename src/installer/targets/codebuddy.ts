@@ -1,8 +1,8 @@
 /**
  * CodeBuddy target. Writes:
  *
- *   - MCP server entry to `~/.codebuddy.json` (global = user scope, loads
- *     in every project) or `./.mcp.json` (local = project scope).
+ *   - MCP server entry to `~/.codebuddy/mcp.json` (global = user scope,
+ *     loads in every project) or `./.mcp.json` (local = project scope).
  *   - Permissions to `~/.codebuddy/settings.json` (global) or
  *     `./.codebuddy/settings.json` (local), gated on `autoAllow`.
  *   - Instructions to `~/.codebuddy/CODEBUDDY.md` (global) or
@@ -10,7 +10,18 @@
  *
  * CodeBuddy follows the same config layout as Claude Code, with
  * `.codebuddy` replacing `.claude` and `CODEBUDDY.md` replacing
- * `CLAUDE.md`.
+ * `CLAUDE.md`. The global MCP config lives inside `~/.codebuddy/`
+ * (not as a top-level dotfile).
+ *
+ * NOTE — why CODEBUDDY.md is still written (unlike Claude Code):
+ * CodeBuddy Code does not surface the MCP `initialize` response's
+ * `instructions` field to the model. Claude Code / Codex / Gemini /
+ * Cursor all receive the SERVER_INSTRUCTIONS playbook automatically
+ * via that field (issue #529 removed the MD writes for those targets).
+ * Until CodeBuddy supports `initialize` instructions natively, we must
+ * keep writing to CODEBUDDY.md — when that support lands, apply the
+ * same #529 migration pattern: drop `writeInstructionsEntry` from
+ * `install()` and add a self-healing `removeInstructionsEntry` cleanup.
  */
 
 import * as fs from 'fs';
@@ -29,12 +40,14 @@ import {
   jsonDeepEqual,
   readJsonFile,
   removeMarkedSection,
+  replaceOrAppendMarkedSection,
   writeJsonFile,
 } from './shared';
 import {
   CODEGRAPH_SECTION_END,
   CODEGRAPH_SECTION_START,
 } from '../instructions-template';
+import { SERVER_INSTRUCTIONS } from '../../mcp/server-instructions';
 
 function configDir(loc: Location): string {
   return loc === 'global'
@@ -42,10 +55,10 @@ function configDir(loc: Location): string {
     : path.join(process.cwd(), '.codebuddy');
 }
 function mcpJsonPath(loc: Location): string {
-  // global → ~/.codebuddy.json (user scope: visible in every project).
+  // global → ~/.codebuddy/mcp.json (user scope: visible in every project).
   // local  → ./.mcp.json (project scope).
   return loc === 'global'
-    ? path.join(os.homedir(), '.codebuddy.json')
+    ? path.join(os.homedir(), '.codebuddy', 'mcp.json')
     : path.join(process.cwd(), '.mcp.json');
 }
 function settingsJsonPath(loc: Location): string {
@@ -85,11 +98,24 @@ class CodeBuddyTarget implements AgentTarget {
       files.push(writePermissionsEntry(loc));
     }
 
-    // 3. CODEBUDDY.md instructions — no longer written. The codegraph
-    // usage guidance now ships solely in the MCP server's `initialize`
-    // response. Strip any block a previous install left behind.
-    const instrCleanup = removeInstructionsEntry(loc);
-    if (instrCleanup.action === 'removed') files.push(instrCleanup);
+    // 3. CODEBUDDY.md instructions
+    //
+    // CodeBuddy Code does NOT surface the MCP `initialize` response's
+    // `instructions` field to the model, so the technique used for
+    // Claude Code / Codex / Gemini / Cursor (issue #529) does not work
+    // here. Those agents receive SERVER_INSTRUCTIONS automatically on
+    // every session via the MCP handshake; CodeBuddy silently discards
+    // that field today.
+    //
+    // As a result we must write the SERVER_INSTRUCTIONS playbook directly
+    // into CODEBUDDY.md so the agent knows to prefer codegraph tools over
+    // grep/find/Read exploration.
+    //
+    // If CodeBuddy adds first-class support for the MCP `initialize`
+    // instructions field in the future, this target should be updated to
+    // drop the CODEBUDDY.md write (and add a self-healing cleanup step,
+    // the same pattern used in the #529 migration for the other targets).
+    files.push(writeInstructionsEntry(loc));
 
     return { files };
   }
@@ -188,6 +214,25 @@ export function writePermissionsEntry(loc: Location): WriteResult['files'][numbe
   }
   writeJsonFile(file, settings);
   return { path: file, action: created ? 'created' : 'updated' };
+}
+
+function codeGraphInstructionsBody(): string {
+  return (
+    CODEGRAPH_SECTION_START + '\n' +
+    SERVER_INSTRUCTIONS + '\n' +
+    CODEGRAPH_SECTION_END
+  );
+}
+
+export function writeInstructionsEntry(loc: Location): WriteResult['files'][number] {
+  const file = instructionsPath(loc);
+  const body = codeGraphInstructionsBody();
+  const raw = replaceOrAppendMarkedSection(file, body, CODEGRAPH_SECTION_START, CODEGRAPH_SECTION_END);
+  // `appended` means the markers weren't found and the section was added
+  // at the end — map it to `updated` for the installer log line.
+  const action: WriteResult['files'][number]['action'] =
+    raw === 'appended' ? 'updated' : raw;
+  return { path: file, action };
 }
 
 export function removeInstructionsEntry(loc: Location): WriteResult['files'][number] {

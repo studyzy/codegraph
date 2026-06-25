@@ -1,7 +1,7 @@
 /**
  * CodeBuddy target. Writes:
  *
- *   - MCP server entry to `~/.codebuddy/mcp.json` (global = user scope,
+ *   - MCP server entry to `~/.codebuddy/.mcp.json` (global = user scope,
  *     loads in every project) or `./.mcp.json` (local = project scope).
  *   - Permissions to `~/.codebuddy/settings.json` (global) or
  *     `./.codebuddy/settings.json` (local), gated on `autoAllow`.
@@ -55,10 +55,10 @@ function configDir(loc: Location): string {
     : path.join(process.cwd(), '.codebuddy');
 }
 function mcpJsonPath(loc: Location): string {
-  // global → ~/.codebuddy/mcp.json (user scope: visible in every project).
+  // global → ~/.codebuddy/.mcp.json (user scope: visible in every project).
   // local  → ./.mcp.json (project scope).
   return loc === 'global'
-    ? path.join(os.homedir(), '.codebuddy', 'mcp.json')
+    ? path.join(os.homedir(), '.codebuddy', '.mcp.json')
     : path.join(process.cwd(), '.mcp.json');
 }
 function settingsJsonPath(loc: Location): string {
